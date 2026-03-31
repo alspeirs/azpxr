@@ -3,7 +3,8 @@
 azpxr summarizes Azure VM availability for a given subscription by region and availability zone.
 
 It provides:
-- a CLI interface for querying and summarizing VM SKUs
+- a Go CLI interface for querying and summarizing VM SKUs
+- a single-file PowerShell CLI for environments where shipping one script is easier
 - a simple HTML view for browsing the same information
 
 ## What it does today
@@ -35,7 +36,7 @@ go build ./cmd/azpxr
 
 ## Usage
 
-### Scan and print a text summary
+### Go CLI: scan and print a text summary
 
 ```bash
 azpxr scan --subscription <subscription-id>
@@ -74,6 +75,43 @@ azpxr serve --subscription <subscription-id> --listen :8080
 Then open:
 - `http://localhost:8080/`
 - `http://localhost:8080/data.json`
+
+## PowerShell script
+
+The repo also includes a single-file PowerShell version:
+
+```powershell
+./azpxr.ps1 scan -Subscription <subscription-id>
+```
+
+Examples:
+
+```powershell
+# Region summary only
+./azpxr.ps1 scan -Subscription <subscription-id> -RegionsOnly
+
+# First page of West US 2 Dsv5-family SKUs
+./azpxr.ps1 scan -Subscription <subscription-id> -Region westus2 -Family dsv5 -PageSize 25 -Page 1
+
+# Filter by SKU name substring and sort by CPU descending
+./azpxr.ps1 scan -Subscription <subscription-id> -Sku NC -SortByCpu -Descending
+
+# Print everything without paging
+./azpxr.ps1 scan -Subscription <subscription-id> -NoPager
+
+# Emit JSON instead of table output
+./azpxr.ps1 scan -Subscription <subscription-id> -Format json
+```
+
+The PowerShell script is designed for console-only use and supports:
+- region filtering
+- family filtering
+- SKU name filtering
+- restricted SKU inclusion
+- page size / page number
+- top-N limiting
+- sort by CPU or memory
+- JSON output when needed
 
 ## Environment
 
