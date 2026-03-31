@@ -86,29 +86,29 @@ The repo also includes single-file PowerShell versions:
 - `azfmxr.ps1` for **Azure Foundry Models** quota/capacity by region
 
 ```powershell
-./azvmxr.ps1 scan -Subscription <subscription-id>
+./azvmxr.ps1 -Subscription <subscription-id>
 ```
 
 Examples:
 
 ```powershell
 # Region summary only
-./azvmxr.ps1 scan -Subscription <subscription-id> -RegionsOnly
+./azvmxr.ps1 -Subscription <subscription-id> -RegionsOnly
 
 # First page of West US 2 Dsv5-family SKUs
-./azvmxr.ps1 scan -Subscription <subscription-id> -Region westus2 -Family dsv5 -PageSize 25 -Page 1
+./azvmxr.ps1 -Subscription <subscription-id> -Region westus2 -Family dsv5 -PageSize 25 -Page 1
 
 # Filter by SKU name substring and sort by CPU descending
-./azvmxr.ps1 scan -Subscription <subscription-id> -Sku NC -SortByCpu -Descending
+./azvmxr.ps1 -Subscription <subscription-id> -Sku NC -SortByCpu -Descending
 
 # Interactive paging: Enter for next page, q to quit
-./azvmxr.ps1 scan -Subscription <subscription-id> -Interactive -PageSize 25
+./azvmxr.ps1 -Subscription <subscription-id> -Interactive -PageSize 25
 
 # Print everything without paging
-./azvmxr.ps1 scan -Subscription <subscription-id> -NoPager
+./azvmxr.ps1 -Subscription <subscription-id> -NoPager
 
 # Emit JSON instead of table output
-./azvmxr.ps1 scan -Subscription <subscription-id> -Format json
+./azvmxr.ps1 -Subscription <subscription-id> -Format json
 ```
 
 `azvmxr.ps1` is designed for console-only use and supports:
