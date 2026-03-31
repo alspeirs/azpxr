@@ -96,6 +96,9 @@ Examples:
 # Filter by SKU name substring and sort by CPU descending
 ./azpxr.ps1 scan -Subscription <subscription-id> -Sku NC -SortByCpu -Descending
 
+# Interactive paging: Enter for next page, q to quit
+./azpxr.ps1 scan -Subscription <subscription-id> -Interactive -PageSize 25
+
 # Print everything without paging
 ./azpxr.ps1 scan -Subscription <subscription-id> -NoPager
 
@@ -109,6 +112,7 @@ The PowerShell script is designed for console-only use and supports:
 - SKU name filtering
 - restricted SKU inclusion
 - page size / page number
+- interactive paging in the terminal
 - top-N limiting
 - sort by CPU or memory
 - JSON output when needed

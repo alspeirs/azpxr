@@ -16,6 +16,7 @@ param(
     [string]$Sku,
     [switch]$RegionsOnly,
     [switch]$NoPager,
+    [switch]$Interactive,
     [switch]$SortByMemory,
     [switch]$SortByCpu,
     [switch]$Descending
@@ -45,6 +46,7 @@ Parameters:
   -Top                Limit total matching rows before paging.
   -RegionsOnly        Show region summary only.
   -NoPager            Disable paging and print all matching rows.
+  -Interactive        Prompt after each page; Enter=next, q=quit.
   -SortByMemory       Sort SKUs by MemoryGB instead of name.
   -SortByCpu          Sort SKUs by vCPUs instead of name.
   -Descending         Reverse sort order.
@@ -199,6 +201,7 @@ function Show-TextReport {
         [int]$Page,
         [int]$Top,
         [bool]$NoPager,
+        [bool]$Interactive,
         [bool]$SortByMemory,
         [bool]$SortByCpu,
         [bool]$Descending
@@ -231,20 +234,64 @@ function Show-TextReport {
         $pageRows = $sorted
         $start = 1
         $end = $total
-    } else {
-        if ($PageSize -lt 1) { throw 'PageSize must be >= 1.' }
-        if ($Page -lt 1) { throw 'Page must be >= 1.' }
-        $pageCount = [Math]::Ceiling($total / [double]$PageSize)
-        if ($Page -gt $pageCount) {
-            throw ("Page {0} is out of range. Last page is {1}." -f $Page, $pageCount)
-        }
-        $skip = ($Page - 1) * $PageSize
-        $pageRows = @($sorted | Select-Object -Skip $skip -First $PageSize)
-        $start = $skip + 1
-        $end = $skip + $pageRows.Count
-        Write-Host ("Page {0}/{1}  (rows {2}-{3})" -f $Page, $pageCount, $start, $end)
-        Write-Host ''
+
+        $pageRows |
+            Select-Object Region, Name, Family,
+                @{Name='vCPU';Expression={ if ($_.vCPUs) { $_.vCPUs } else { '-' } }},
+                @{Name='MemGB';Expression={ if ($_.MemoryGB) { $_.MemoryGB } else { '-' } }},
+                @{Name='Zones';Expression={ Join-OrDash $_.Zones }},
+                @{Name='Restrictions';Expression={ Join-OrDash $_.Restrictions }} |
+            Format-Table -AutoSize
+        return
     }
+
+    if ($PageSize -lt 1) { throw 'PageSize must be >= 1.' }
+    if ($Page -lt 1) { throw 'Page must be >= 1.' }
+    $pageCount = [Math]::Ceiling($total / [double]$PageSize)
+
+    if ($Interactive) {
+        for ($currentPage = 1; $currentPage -le $pageCount; $currentPage++) {
+            $skip = ($currentPage - 1) * $PageSize
+            $pageRows = @($sorted | Select-Object -Skip $skip -First $PageSize)
+            $start = $skip + 1
+            $end = $skip + $pageRows.Count
+
+            if ($currentPage -gt 1) {
+                Write-Host ''
+            }
+            Write-Host ("Page {0}/{1}  (rows {2}-{3})" -f $currentPage, $pageCount, $start, $end)
+            Write-Host ''
+
+            $pageRows |
+                Select-Object Region, Name, Family,
+                    @{Name='vCPU';Expression={ if ($_.vCPUs) { $_.vCPUs } else { '-' } }},
+                    @{Name='MemGB';Expression={ if ($_.MemoryGB) { $_.MemoryGB } else { '-' } }},
+                    @{Name='Zones';Expression={ Join-OrDash $_.Zones }},
+                    @{Name='Restrictions';Expression={ Join-OrDash $_.Restrictions }} |
+                Format-Table -AutoSize
+
+            if ($currentPage -lt $pageCount) {
+                $response = Read-Host "Press Enter for next page, or type q to quit"
+                if ($response -match '^(q|quit)$') {
+                    break
+                }
+            }
+        }
+
+        Write-Host ''
+        Write-Host ("Tip: use -PageSize <n>, -Top <n>, -SortByCpu, -SortByMemory, -Region, -Family, or -Sku to narrow things down.")
+        return
+    }
+
+    if ($Page -gt $pageCount) {
+        throw ("Page {0} is out of range. Last page is {1}." -f $Page, $pageCount)
+    }
+    $skip = ($Page - 1) * $PageSize
+    $pageRows = @($sorted | Select-Object -Skip $skip -First $PageSize)
+    $start = $skip + 1
+    $end = $skip + $pageRows.Count
+    Write-Host ("Page {0}/{1}  (rows {2}-{3})" -f $Page, $pageCount, $start, $end)
+    Write-Host ''
 
     $pageRows |
         Select-Object Region, Name, Family,
@@ -254,10 +301,8 @@ function Show-TextReport {
             @{Name='Restrictions';Expression={ Join-OrDash $_.Restrictions }} |
         Format-Table -AutoSize
 
-    if (-not $NoPager) {
-        Write-Host ''
-        Write-Host ("Tip: use -Page <n>, -PageSize <n>, -Top <n>, -SortByCpu, -SortByMemory, -Region, -Family, or -Sku to narrow things down.")
-    }
+    Write-Host ''
+    Write-Host ("Tip: use -Page <n>, -PageSize <n>, -Top <n>, -Interactive, -SortByCpu, -SortByMemory, -Region, -Family, or -Sku to narrow things down.")
 }
 
 if ($Command -eq 'help') {
@@ -287,4 +332,4 @@ if ($RegionsOnly) {
     exit 0
 }
 
-Show-TextReport -Rows $rows -Subscription $resolvedSubscription -PageSize $PageSize -Page $Page -Top $Top -NoPager:$NoPager -SortByMemory:$SortByMemory -SortByCpu:$SortByCpu -Descending:$Descending
+Show-TextReport -Rows $rows -Subscription $resolvedSubscription -PageSize $PageSize -Page $Page -Top $Top -NoPager:$NoPager -Interactive:$Interactive -SortByMemory:$SortByMemory -SortByCpu:$SortByCpu -Descending:$Descending
