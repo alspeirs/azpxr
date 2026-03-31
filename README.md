@@ -1,11 +1,13 @@
 # azpxr
 
-azpxr summarizes Azure VM availability for a given subscription by region and availability zone.
+azpxr stands for **Azure Products By Region**.
+
+Today, the Go CLI in this repo focuses on **Azure VM availability by region and availability zone**. The PowerShell companions now split by product area so the naming is less muddy.
 
 It provides:
-- a Go CLI interface for querying and summarizing VM SKUs
-- a single-file PowerShell CLI for environments where shipping one script is easier
-- a simple HTML view for browsing the same information
+- a Go CLI interface for querying and summarizing Azure VM SKUs
+- single-file PowerShell CLIs for specific Azure product areas
+- a simple HTML view for browsing VM availability information
 
 ## What it does today
 
@@ -76,37 +78,40 @@ Then open:
 - `http://localhost:8080/`
 - `http://localhost:8080/data.json`
 
-## PowerShell script
+## PowerShell scripts
 
-The repo also includes a single-file PowerShell version:
+The repo also includes single-file PowerShell versions:
+
+- `azvmxr.ps1` for **Azure VM** SKU availability by region/zone
+- `azfmxr.ps1` for **Azure Foundry Models** quota/capacity by region
 
 ```powershell
-./azpxr.ps1 scan -Subscription <subscription-id>
+./azvmxr.ps1 scan -Subscription <subscription-id>
 ```
 
 Examples:
 
 ```powershell
 # Region summary only
-./azpxr.ps1 scan -Subscription <subscription-id> -RegionsOnly
+./azvmxr.ps1 scan -Subscription <subscription-id> -RegionsOnly
 
 # First page of West US 2 Dsv5-family SKUs
-./azpxr.ps1 scan -Subscription <subscription-id> -Region westus2 -Family dsv5 -PageSize 25 -Page 1
+./azvmxr.ps1 scan -Subscription <subscription-id> -Region westus2 -Family dsv5 -PageSize 25 -Page 1
 
 # Filter by SKU name substring and sort by CPU descending
-./azpxr.ps1 scan -Subscription <subscription-id> -Sku NC -SortByCpu -Descending
+./azvmxr.ps1 scan -Subscription <subscription-id> -Sku NC -SortByCpu -Descending
 
 # Interactive paging: Enter for next page, q to quit
-./azpxr.ps1 scan -Subscription <subscription-id> -Interactive -PageSize 25
+./azvmxr.ps1 scan -Subscription <subscription-id> -Interactive -PageSize 25
 
 # Print everything without paging
-./azpxr.ps1 scan -Subscription <subscription-id> -NoPager
+./azvmxr.ps1 scan -Subscription <subscription-id> -NoPager
 
 # Emit JSON instead of table output
-./azpxr.ps1 scan -Subscription <subscription-id> -Format json
+./azvmxr.ps1 scan -Subscription <subscription-id> -Format json
 ```
 
-The PowerShell script is designed for console-only use and supports:
+`azvmxr.ps1` is designed for console-only use and supports:
 - region filtering
 - family filtering
 - SKU name filtering
@@ -116,6 +121,39 @@ The PowerShell script is designed for console-only use and supports:
 - top-N limiting
 - sort by CPU or memory
 - JSON output when needed
+
+### azfmxr.ps1
+
+`azfmxr.ps1` discovers Azure Foundry / OpenAI model quota by region for the current subscription.
+
+Examples:
+
+```powershell
+# Basic run against current Azure CLI subscription
+./azfmxr.ps1
+
+# Limit to one region or model
+./azfmxr.ps1 -Region eastus -ModelName gpt-4o
+
+# Show interactive paging in the terminal
+./azfmxr.ps1 -Interactive -PageSize 25
+
+# Tune parallel ARM lookups
+./azfmxr.ps1 -ThrottleLimit 8
+
+# Include zero-capacity entries and export CSV
+./azfmxr.ps1 -IncludeZeroQuota -ExportCsv -CsvPath .\foundry-region-model-quota.csv
+```
+
+`azfmxr.ps1` supports:
+- optional subscription selection
+- discovery of OpenAI and AIServices Cognitive Services accounts
+- model and version discovery from those resources
+- regional capacity lookup via ARM
+- filtering by region, model name, model version, and model format
+- interactive or fixed paging in the terminal
+- bounded parallel ARM lookups via `-ThrottleLimit`
+- optional CSV export
 
 ## Environment
 
@@ -131,8 +169,15 @@ export AZURE_SUBSCRIPTION_ID=<subscription-id>
 - Zone information depends on what Azure exposes for each SKU/location.
 - Restricted SKUs are excluded by default; add `--include-restricted` to include them.
 
+## Naming
+
+- `azpxr` = **Azure Products By Region**
+- `azvmxr` = **Azure VMs By Region**
+- `azfmxr` = **Azure Foundry Models By Region**
+
 ## Likely next steps
 
+- add more product-specific companions under the azpxr umbrella
 - richer CLI formatting
 - paging / top-N views for large subscriptions
 - static HTML export improvements

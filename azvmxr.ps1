@@ -27,12 +27,12 @@ Set-StrictMode -Version Latest
 
 function Show-Usage {
     @"
-azpxr.ps1 - Azure VM availability summary (PowerShell)
+azvmxr.ps1 - Azure VM availability summary (PowerShell)
 
 Usage:
-  ./azpxr.ps1 scan --subscription <id> [--region westus2] [--family dsv5] [--sku NC] [--page-size 40] [--page 1]
-  ./azpxr.ps1 scan --subscription <id> --regions-only
-  ./azpxr.ps1 scan --subscription <id> --format json
+  ./azvmxr.ps1 scan --subscription <id> [--region westus2] [--family dsv5] [--sku NC] [--page-size 40] [--page 1]
+  ./azvmxr.ps1 scan --subscription <id> --regions-only
+  ./azvmxr.ps1 scan --subscription <id> --format json
 
 Parameters:
   -Subscription       Azure subscription ID. Falls back to AZURE_SUBSCRIPTION_ID.
